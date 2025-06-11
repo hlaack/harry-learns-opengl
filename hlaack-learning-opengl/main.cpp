@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+// TODO: PICK UP AT LINKING VERTEX ATTRIBUTES on LEARNOPENGL
+
 //FUNCTION TEMPLATES
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -10,6 +12,22 @@ void processInput(GLFWwindow* window);
 //UNCHANGING INT TYPES THAT CAN ONLY STORE POSITIVE VALUES (large possible values than a signed int)
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+
+//GLSL FUNCTION FOR VERTEX SHADER, STORED IN C CONST
+const char* vertexShaderSource = "#version 330 core\n"
+	"layout (location = 0) in vec3 aPos;\n"
+	"void main()\n"
+	"{\n"
+	"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+	"}\0";
+
+//GLSL FUNCTION FOR FRAGMENT SHADER, STORED IN C CONST
+const char* fragmentShaderSource = "#version 330 core\n"
+	"out vec4 FragColor;\n"
+	"void main()\n"
+	"{\n"
+	"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+	"}\0";
 
 int main() {
 	glfwInit();
@@ -33,6 +51,64 @@ int main() {
 		return -1;
 	}
 
+	//CREATE SHADER OBJECT for VERTEX SHADER
+	unsigned int vertexShader;
+	vertexShader = glCreateShader(GL_VERTEX_SHADER); //STORE SHADER IN UNSIGNED INT, createShader takes type of shader as arg
+	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL); //ATTACH SHADER SOURCE TO SHADER OBJECT (takes shader obj, num strings, and source code for shader as args)
+	glCompileShader(vertexShader); //FINALLY COMPILE THE SHADER
+
+	//LOOK FOR SHADER ERRORS
+	int success; //DEFINE SUCCESS
+	char infoLog[512]; //STORE ERROR MESSAGE
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+
+	if (!success) {
+		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::VERTEX::COMPILATION::FAILED\n" << infoLog << std::endl;
+	}
+
+	//CREATE SHADER OBJECT for FRAGMENT SHADER
+	unsigned int fragmentShader;
+	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER); //STORE SHADER IN UNSIGNED INT
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL); //ATTACH SHADER SOURCE TO SHADER OBJECT
+	glCompileShader(fragmentShader);
+
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION::FAILED\n" << infoLog << std::endl;
+	}
+
+	//LINKING SHADERS
+	unsigned int shaderProgram;
+	shaderProgram = glCreateProgram(); //CREATE PROGRAM OBJECT
+
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader); //ATTACH THE TWO SHADERS THEN LINK THEM TO PROGRAM
+	glLinkProgram(shaderProgram);
+
+	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+	if (!success) {
+		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+		std::cout << "ERROR::PROGRAM::SHADER::COMPILATION::FAILED\n" << infoLog << std::endl;
+	}
+
+	glDeleteShader(vertexShader); //AFTER ATTACHING TO PROGRAM, SHADERS ARE NO LONGER NEEDED
+	glDeleteShader(fragmentShader);
+
+	//CREATE NORMALIZED COORDINATES FOR TRIANGLE
+	float vertices[] = {
+		-0.5f, -0.5f, 0.0f,
+		 0.5f, -0.5f, 0.0f,
+		 0.0f,  0.5f, 0.0f
+	};
+	
+	unsigned int VBO;
+	glGenBuffers(1, &VBO); //CREATE VERTEX BUFFER OBJECT TO STORE LARGE AMOUNT OF VERTEX INFORMATION
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO); //BIND BUFFER ARRAY OBJECT
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); //COPY AND SUBMIT USER-DEFINED DATA TO BUFFER
+
 	//WHILE THE WINDOW IS OPEN (while bool WindowShouldClose is not true!)
 	while (!glfwWindowShouldClose(window)) {
 		
@@ -42,6 +118,8 @@ int main() {
 		//RENDERING
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		glUseProgram(shaderProgram);
 
 		//HANDLE EVENTS AND SWAP BUFFERS
 		glfwSwapBuffers(window);

@@ -3,8 +3,6 @@
 
 #include <iostream>
 
-// TODO: PICK UP AT LINKING VERTEX ATTRIBUTES on LEARNOPENGL
-
 //FUNCTION TEMPLATES
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -106,8 +104,19 @@ int main() {
 	unsigned int VBO;
 	glGenBuffers(1, &VBO); //CREATE VERTEX BUFFER OBJECT TO STORE LARGE AMOUNT OF VERTEX INFORMATION
 
+	unsigned int VAO;
+	glGenVertexArrays(1, &VAO); //CREATE VERTEX ARRAY OBJECT TO STORE VERTEX ATTRIBUTE CALLS
+
+	//1. BIND VA OBJECT
+	glBindVertexArray(VAO); //BIND VERTEX ARRAY OBJECT
+	
+	//2. COPY VERT ARRAY INTO A BUFFER
 	glBindBuffer(GL_ARRAY_BUFFER, VBO); //BIND BUFFER ARRAY OBJECT
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); //COPY AND SUBMIT USER-DEFINED DATA TO BUFFER
+
+	//3. SET VERT ATTRIBUTE POINTERS
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); //TELL OPENGL HOW TO INTERPRET VERTEX DATA. 1st arg is location of vertex shader, 2nd arg is size (vec3), 3rd arg specifies type, 4th arg bool for normalization, 5th arg is stride, last is offset for beginning of position data. 
+	glEnableVertexAttribArray(0); //THEN ENABLE VERTEX ATTRIBUTE (THEY ARE DISABLED BY DEFAULT)
 
 	//WHILE THE WINDOW IS OPEN (while bool WindowShouldClose is not true!)
 	while (!glfwWindowShouldClose(window)) {
@@ -115,11 +124,17 @@ int main() {
 		//HANDLE INPUT
 		processInput(window);
 		
+
+	//4. DRAW OBJECT
 		//RENDERING
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glUseProgram(shaderProgram);
+		glBindVertexArray(VAO);
+		//THEN PASS OPENGL DRAW FUNCTION
+		glDrawArrays(GL_TRIANGLES, 0, 3); // 1st arg is primitive type to draw, 2nd arg tells starting index, 3rd arg specifies amt of verts
+
 
 		//HANDLE EVENTS AND SWAP BUFFERS
 		glfwSwapBuffers(window);

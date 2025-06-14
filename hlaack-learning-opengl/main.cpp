@@ -96,16 +96,25 @@ int main() {
 
 	//CREATE NORMALIZED COORDINATES FOR TRIANGLE
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f,
-		 0.5f, -0.5f, 0.0f,
-		 0.0f,  0.5f, 0.0f
+		 0.5f,  0.5f, 0.0f, //top right
+		 0.5f, -0.5f, 0.0f, //bottom right
+		-0.5f, -0.5f, 0.0f, //bottom left
+		-0.5f,  0.5f, 0.0f //top left
+	};
+	unsigned int indices[] = {
+		0, 1, 3, //first triangle
+		1, 2, 3  //second triangle
 	};
 	
 	unsigned int VBO;
 	glGenBuffers(1, &VBO); //CREATE VERTEX BUFFER OBJECT TO STORE LARGE AMOUNT OF VERTEX INFORMATION
+	
+	unsigned int EBO;
+	glGenBuffers(1, &EBO);
 
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO); //CREATE VERTEX ARRAY OBJECT TO STORE VERTEX ATTRIBUTE CALLS
+
 
 	//1. BIND VA OBJECT
 	glBindVertexArray(VAO); //BIND VERTEX ARRAY OBJECT
@@ -113,8 +122,12 @@ int main() {
 	//2. COPY VERT ARRAY INTO A BUFFER
 	glBindBuffer(GL_ARRAY_BUFFER, VBO); //BIND BUFFER ARRAY OBJECT
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); //COPY AND SUBMIT USER-DEFINED DATA TO BUFFER
+	
+	//3. COPY INDEX ARRAY INTO ELEMENT BUFFER
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	//3. SET VERT ATTRIBUTE POINTERS
+	//4. SET VERT ATTRIBUTE POINTERS
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); //TELL OPENGL HOW TO INTERPRET VERTEX DATA. 1st arg is location of vertex shader, 2nd arg is size (vec3), 3rd arg specifies type, 4th arg bool for normalization, 5th arg is stride, last is offset for beginning of position data. 
 	glEnableVertexAttribArray(0); //THEN ENABLE VERTEX ATTRIBUTE (THEY ARE DISABLED BY DEFAULT)
 
@@ -125,7 +138,7 @@ int main() {
 		processInput(window);
 		
 
-	//4. DRAW OBJECT
+	//5. DRAW OBJECT
 		//RENDERING
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -133,8 +146,9 @@ int main() {
 		glUseProgram(shaderProgram);
 		glBindVertexArray(VAO);
 		//THEN PASS OPENGL DRAW FUNCTION
-		glDrawArrays(GL_TRIANGLES, 0, 3); // 1st arg is primitive type to draw, 2nd arg tells starting index, 3rd arg specifies amt of verts
-
+		//glDrawArrays(GL_TRIANGLES, 0, 3); // 1st arg is primitive type to draw, 2nd arg tells starting index, 3rd arg specifies amt of verts
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // 1st arg is type to draw, 2nd arg is # of elements, 3rd is type of indices, 4th arg specifies offset
+		glBindVertexArray(0); //UNBIND VERTEX ARRAY
 
 		//HANDLE EVENTS AND SWAP BUFFERS
 		glfwSwapBuffers(window);
